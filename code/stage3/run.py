@@ -12,6 +12,7 @@ from config import DATASET_DIR, REPO_ROOT, RESOLVED_LEDGERS_FILENAME, TEMP_DATA_
 from stage2.context_loader import load_user_context_rows
 from stage2.run import run_stage2
 from stage3.decide import decide_for_request
+from llm.saved_results import reset_explanations_cache
 from llm.usage import get_usage, reset_usage
 from stage3.explain import generate_decision_explanation
 from stage3.models import OUTPUT_COLUMNS
@@ -77,6 +78,7 @@ def run_stage3(
 ) -> Stage3Result:
     """Stage 3 entry: decide per user, explain, write output.csv, optional regression."""
     reset_usage()
+    reset_explanations_cache()
     ledger_path = _ensure_ledgers(mode)
     ledgers_by_user = _load_ledgers(ledger_path)
 

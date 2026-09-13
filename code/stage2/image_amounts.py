@@ -16,20 +16,42 @@ def _load_images_document(path: Path | None = None) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def load_image_amount_lookup(path: Path | None = None) -> dict[str, dict[str, str]]:
-    """Return event_id -> resolved amount metadata from images.json quick_lookup."""
+def _quick_lookup_from_document(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """Saved hand-extracted amounts from temp_data/images.json."""
     data = _load_images_document(path)
     quick = data.get("quick_lookup", {})
     if not isinstance(quick, dict):
         return {}
-    return quick
+    return {str(k): v for k, v in quick.items() if isinstance(v, dict)}
+
+
+def load_image_amount_lookup(
+    path: Path | None = None,
+    *,
+    use_llm: bool = True,
+) -> dict[str, dict[str, str]]:
+    """
+    Event_id -> resolved amount metadata.
+
+    Primary: DeepSeek per receipt image (llm/image_resolution.py).
+    Fallback: quick_lookup in temp_data/images.json for failed/missing LLM rows.
+    """
+    saved = _quick_lookup_from_document(path)
+    if not use_llm:
+        return saved
+    try:
+        from llm.image_resolution import build_image_lookup_via_llm
+
+        return build_image_lookup_via_llm(saved)
+    except Exception:
+        return saved
 
 
 def image_evidence_for_request(
     request_id: str,
     path: Path | None = None,
 ) -> list[dict[str, str]]:
-    """Summaries from temp_data/images.json for LLM context (no vision calls)."""
+    """Summaries from temp_data/images.json for explanation LLM context."""
     data = _load_images_document(path)
     images = data.get("images", [])
     if not isinstance(images, list):

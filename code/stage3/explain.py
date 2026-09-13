@@ -1,25 +1,24 @@
-"""Decision explanations (DeepSeek LLM with deterministic fallback)."""
+"""Decision explanations (DeepSeek LLM with saved-result fallback)."""
 
 from __future__ import annotations
 
 import sys
 from typing import Any
 
+from llm.saved_results import get_saved_explanation
 from stage2.models import UserContextRow
 from stage3.models import DecisionRow
 
 _llm_warned = False
+_saved_warned = False
 
 
-def _stub_explanation(decision: DecisionRow, home_currency: str) -> str:
-    """Deterministic one-line explanation when LLM is disabled or fails."""
-    method = decision.recommended_payment_method
-    status = decision.affordability_status
-    amount = decision.amount_safe_to_pay
+def _minimal_fallback(decision: DecisionRow, home_currency: str) -> str:
+    """Last resort when LLM and saved explanations are unavailable."""
     return (
-        f"{status.replace('_', ' ').title()} via {method}; safe to pay {amount} "
-        f"{home_currency} on {decision.request_id}. "
-        f"Plan: {decision.payment_plan or 'none'}."
+        f"{decision.affordability_status.replace('_', ' ').title()} via "
+        f"{decision.recommended_payment_method}; safe to pay "
+        f"{decision.amount_safe_to_pay} {home_currency}."
     )
 
 
@@ -38,14 +37,15 @@ def generate_decision_explanation(
     use_llm: bool = True,
     offline_sample_explanations: bool = False,
 ) -> str:
-    """Produce decision_explanation via offline gold, LLM, or stub fallback."""
+    """Produce decision_explanation: LLM first, then saved output, then sample gold."""
     gold = _sample_gold_explanation(context) if context.data_source == "sample" else None
 
     if offline_sample_explanations and gold:
         return gold
 
     if not use_llm:
-        return gold or _stub_explanation(decision, context.home_currency)
+        saved = get_saved_explanation(context.request_id)
+        return saved or gold or _minimal_fallback(decision, context.home_currency)
 
     try:
         from llm.decision_explanation import generate_llm_decision_explanation
@@ -55,11 +55,21 @@ def generate_decision_explanation(
         from llm.usage import get_usage
 
         get_usage().record_failure()
-        global _llm_warned
+        global _llm_warned, _saved_warned
         if not _llm_warned:
             print(
-                f"Warning: LLM explanation failed ({exc}); using stub for this run.",
+                f"Warning: LLM explanation failed ({exc}); using saved explanations.",
                 file=sys.stderr,
             )
             _llm_warned = True
-        return gold or _stub_explanation(decision, context.home_currency)
+        saved = get_saved_explanation(context.request_id)
+        if saved:
+            return saved
+        if not _saved_warned:
+            print(
+                "Warning: No saved explanation for "
+                f"{context.request_id}; using minimal fallback.",
+                file=sys.stderr,
+            )
+            _saved_warned = True
+        return gold or _minimal_fallback(decision, context.home_currency)

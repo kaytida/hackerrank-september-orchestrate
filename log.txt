@@ -770,3 +770,21 @@ repo_root=c:\Users\e430278.SPI-GLOBAL\DAAIS\Personal\Hackerrank September Orches
 worktree=main
 parent_agent=none
 
+## [2026-09-13T17:25:00+05:30] Update docs/ with flows and LLM fallbacks
+
+User Prompt (verbatim, secrets redacted):
+Make sure to write all the changes done to the documentation present in the docs/ folder. It should include the code flows and the fallback options
+
+Agent Response Summary:
+Rewrote docs/README.md with end-to-end flow, deterministic vs LLM table, image and explanation fallback diagrams, CLI and artifacts. Updated stage1.md (images metadata), stage2.md (image LLM + images.json), stage3.md (explanation chain and saved sources).
+
+Actions:
+* Updated docs/README.md, docs/stage1.md, docs/stage2.md, docs/stage3.md
+
+Context:
+tool=Cursor
+branch=unknown
+repo_root=c:\Users\e430278.SPI-GLOBAL\DAAIS\Personal\Hackerrank September Orchestrate\hackerrank-orchestrate-september26
+worktree=main
+parent_agent=none
+

@@ -42,7 +42,7 @@ On success you should see paths printed for intermediate files and a line like `
 
 - Python **3.10+** (3.12 tested)
 - Unmodified challenge data under `dataset/`
-- `code/temp_data/images.json` — hand-extracted image amounts (vision API not required)
+- `code/temp_data/images.json` — saved image amount fallback (`quick_lookup`); Stage 2 tries DeepSeek on receipt PNGs first
 
 **Stage order:** Stage 3 needs `code/temp_data/user_context.csv` (Stage 1). It rebuilds `code/temp_data/resolved_ledgers.json` via Stage 2 automatically if that file is missing or its stored `mode` / `user_count` does not match the current `--mode`.
 
@@ -114,7 +114,9 @@ Run on a network that can reach `api.deepseek.com`. Smoke test:
 python code/test_deepseek.py
 ```
 
-If the API is unreachable (e.g. corporate firewall), use `--stub-explanations` or `--offline-explanations` instead of changing the client.
+If the API is unreachable (e.g. corporate firewall), use `--stub-explanations` to reuse explanations from repo-root `output.csv` (or `code/temp_data/saved_decision_explanations.json`). `--offline-explanations` uses sample gold text only for the 25 sample users.
+
+**Images:** Stage 2 calls DeepSeek on each `dataset/media/images/*.png` linked from `images.csv`; failed calls fall back to `code/temp_data/images.json` `quick_lookup`.
 
 After an LLM run, token usage is written under `code/temp_data/` (see printed `LLM usage -> ...` line).
 

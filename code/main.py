@@ -70,7 +70,7 @@ def main() -> None:
     parser.add_argument(
         "--stub-explanations",
         action="store_true",
-        help="Skip DeepSeek; use deterministic explanation stubs in Stage 3",
+        help="Skip DeepSeek; use saved explanations (output.csv / temp_data) in Stage 3",
     )
     parser.add_argument(
         "--offline-explanations",

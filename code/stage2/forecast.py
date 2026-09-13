@@ -243,7 +243,7 @@ def _image_salary_adjustments(
     request_id: str,
     request_date: str,
 ) -> list[ForecastAdjustment]:
-    """Use hand-extracted payslip amounts from temp_data/images.json (no vision LLM)."""
+    """Use image-resolved payslip amounts (LLM with images.json fallback)."""
     adjustments: list[ForecastAdjustment] = []
     for index, image in enumerate(image_evidence_for_request(request_id)):
         amount_raw = (image.get("resolved_amount") or "").strip()
