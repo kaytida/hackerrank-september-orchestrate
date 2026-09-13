@@ -1,3 +1,5 @@
+"""Payment plan builders and user payment-method constraints."""
+
 from __future__ import annotations
 
 from datetime import date, timedelta
@@ -7,14 +9,17 @@ from stage3.models import CandidatePlan
 
 
 def _parse_date(value: str) -> date:
+    """Parse ISO dates in payment options and plans."""
     return date.fromisoformat(value)
 
 
 def _fmt_plan(payments: list[tuple[str, float]]) -> list[tuple[str, float]]:
+    """Drop zero-amount payments from a plan list."""
     return [(d, float(a)) for d, a in payments if a > 0]
 
 
 def expand_installment_option(option: dict[str, str]) -> list[tuple[str, float]]:
+    """Expand a payment_options installment row into dated payment tuples."""
     first = _parse_date(option["first_payment_date"])
     freq = int(option["payment_frequency_days"])
     count = int(option["number_of_payments"])
@@ -28,12 +33,14 @@ def expand_installment_option(option: dict[str, str]) -> list[tuple[str, float]]
 
 
 def build_full_payment_plan(request_date: str, amount: float) -> list[tuple[str, float]]:
+    """Single payment on request_date for the full amount."""
     return [(request_date, amount)]
 
 
 def build_partial_plan(
     request_date: str, pay_today: float, remainder_date: str, requested_amount: float
 ) -> list[tuple[str, float]]:
+    """Two-payment plan: partial today and remainder on remainder_date."""
     remainder = requested_amount - pay_today
     return _fmt_plan([(request_date, pay_today), (remainder_date, remainder)])
 
@@ -42,6 +49,7 @@ def plan_from_installment_option(
     option: dict[str, str],
     deadline: str,
 ) -> CandidatePlan | None:
+    """Build a CandidatePlan from an installments payment option, or None if invalid."""
     payments = expand_installment_option(option)
     if not payments:
         return None
@@ -67,6 +75,7 @@ def plan_full_payment(
     deadline: str,
     pay_date: str | None = None,
 ) -> CandidatePlan:
+    """Candidate for paying the full requested amount on pay_date (default request_date)."""
     when = pay_date or request_date
     return CandidatePlan(
         affordability_status="affordable_now" if when == request_date else "affordable_later",
@@ -83,6 +92,7 @@ def plan_full_payment(
 
 
 def plan_wait(request_date: str, pay_date: str, requested_amount: float, deadline: str) -> CandidatePlan:
+    """Candidate that pays the full amount on a future pay_date (wait method)."""
     return CandidatePlan(
         affordability_status="affordable_later",
         recommended_payment_method="wait",
@@ -104,6 +114,7 @@ def plan_partial(
     requested_amount: float,
     deadline: str,
 ) -> CandidatePlan:
+    """Candidate partial_payment plan with pay_today and remainder on remainder_date."""
     payments = build_partial_plan(request_date, pay_today, remainder_date, requested_amount)
     return CandidatePlan(
         affordability_status="affordable_with_plan",
@@ -120,6 +131,7 @@ def plan_partial(
 
 
 def plan_not_affordable() -> CandidatePlan:
+    """Fallback candidate when no safe payment plan exists."""
     return CandidatePlan(
         affordability_status="not_affordable",
         recommended_payment_method="not_recommended",
@@ -135,6 +147,7 @@ def plan_not_affordable() -> CandidatePlan:
 
 
 def format_payment_plan(payments: list[tuple[str, float]]) -> str:
+    """Format plan as date:amount pairs joined by | for CSV output."""
     if not payments:
         return "none"
     parts = []
@@ -147,6 +160,7 @@ def format_payment_plan(payments: list[tuple[str, float]]) -> str:
 
 
 def user_accepts_method(context: UserContextRow, method: str) -> bool:
+    """True if the user profile allows the given recommended_payment_method."""
     allowed = context.payment_methods_user_will_consider
     if method == "wait":
         return "full_payment" in allowed
@@ -156,6 +170,7 @@ def user_accepts_method(context: UserContextRow, method: str) -> bool:
 
 
 def installment_allowed(context: UserContextRow, option: dict[str, str]) -> bool:
+    """True if installments are allowed and the option fits max_installment_months."""
     if "installments" not in context.payment_methods_user_will_consider:
         return False
     if context.max_installment_months is None:

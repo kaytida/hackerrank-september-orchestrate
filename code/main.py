@@ -25,6 +25,7 @@ def run_pipeline(
     use_llm_explanations: bool = True,
     offline_sample_explanations: bool = False,
 ) -> None:
+    """Run Stage 1, then Stage 2, then Stage 3 with the given mode and explanation options."""
     print("Stage 1: consolidating user context...")
     result = run_stage1(mode=mode)
     print(
@@ -50,6 +51,7 @@ def run_pipeline(
 
 
 def main() -> None:
+    """Parse CLI flags and invoke one stage or the full pipeline."""
     parser = argparse.ArgumentParser(description="Buy or Wait? pipeline")
     parser.add_argument(
         "--mode",
@@ -68,14 +70,14 @@ def main() -> None:
     parser.add_argument(
         "--stub-explanations",
         action="store_true",
-        help="Skip OpenRouter; use deterministic explanation stubs in Stage 3",
+        help="Skip DeepSeek; use deterministic explanation stubs in Stage 3",
     )
     parser.add_argument(
         "--offline-explanations",
         action="store_true",
         help=(
             "For sample users, use gold decision_explanation from sample_labels "
-            "(no OpenRouter). Remove this flag when API quota is available again."
+            "(no DeepSeek). Remove this flag when you want live LLM explanations again."
         ),
     )
     args = parser.parse_args()

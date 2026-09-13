@@ -15,20 +15,24 @@ from stage2.recurrence import advance_recurrence_date, detect_recurrence_series,
 
 
 def _parse_date(value: str) -> date:
+    """Parse ISO date strings used in forecast flow dicts."""
     return date.fromisoformat(value)
 
 
 def _format_date(value: date) -> str:
+    """Format a date as ISO string for projected flow keys."""
     return value.isoformat()
 
 
 def _signed_amount(event: ResolvedCashEvent) -> float:
+    """Return +amount_home for credits and -amount_home for debits."""
     if event.direction == "credit":
         return event.amount_home
     return -event.amount_home
 
 
 def _is_known_future(event: ResolvedCashEvent, request_date: date) -> bool:
+    """Include scheduled cash flows; pending debits only (problem_statement: ignore pending credits)."""
     settlement = _parse_date(event.settlement_date)
     if settlement < request_date:
         return False
@@ -45,6 +49,7 @@ def _collect_known_future_flows(
     request_date: date,
     horizon_end: date,
 ) -> list[dict[str, Any]]:
+    """Build flow dicts for scheduled/pending-debit events within the forecast window."""
     flows: list[dict[str, Any]] = []
     for event in cash_events:
         if not _is_known_future(event, request_date):
@@ -99,6 +104,7 @@ def _collect_recurrence_flows(
     protected_categories: frozenset[str] | None = None,
     category_occupied: set[tuple[str, str, str]] | None = None,
 ) -> list[dict[str, Any]]:
+    """Project recurring series forward, avoiding slots already taken by known flows."""
     historical = [
         e
         for e in cash_events
@@ -161,6 +167,7 @@ def _simulate_daily_balances(
     minimum_balance: float,
     flows: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Walk day-by-day applying debits then credits; record end-of-day balance."""
     by_date: dict[str, list[dict[str, Any]]] = {}
     for flow in flows:
         by_date.setdefault(flow["date"], []).append(flow)
@@ -210,6 +217,7 @@ def is_balance_safe(
 
 
 def payment_flows(plan: list[tuple[str, float]]) -> list[dict[str, Any]]:
+    """Convert (date, amount) payment plan tuples into forecast debit flow dicts."""
     flows: list[dict[str, Any]] = []
     for pay_date, amount in plan:
         if amount <= 0:
@@ -272,7 +280,7 @@ def build_ninety_day_forecast(
     """
     Build baseline 90-day balance forecast from request_date (no request payments).
 
-    Message LLM adjustments are stubbed via get_message_forecast_adjustments().
+    Applies deterministic message and image salary adjustments to projected flows.
     """
     request_date = _parse_date(ledger.request_date)
     horizon_end = request_date + timedelta(days=FORECAST_HORIZON_DAYS)

@@ -6,6 +6,8 @@ from typing import Any
 
 @dataclass
 class UserContextRow:
+    """One user request and financial context loaded from user_context.csv."""
+
     user_id: str
     request_id: str
     data_source: str
@@ -33,6 +35,8 @@ class UserContextRow:
 
 @dataclass
 class ResolvedCashEvent:
+    """Single cash movement in home currency after resolution rules."""
+
     event_id: str
     settlement_date: str
     event_date: str
@@ -53,12 +57,16 @@ class ResolvedCashEvent:
 
 @dataclass
 class ExcludedEvent:
+    """Event omitted from the cash ledger with a machine-readable reason."""
+
     event_id: str
     reason: str
 
 
 @dataclass
 class ResolvedLedger:
+    """Resolved events, exclusions, and 90-day forecast for one user."""
+
     user_id: str
     request_id: str
     request_date: str
@@ -72,6 +80,7 @@ class ResolvedLedger:
     forecast: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        """Serialize ledger for resolved_ledgers.json."""
         return {
             "user_id": self.user_id,
             "request_id": self.request_id,

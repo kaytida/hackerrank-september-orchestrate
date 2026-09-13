@@ -1,12 +1,12 @@
-"""OpenRouter-backed decision_explanation generation (decision fields are fixed)."""
+"""DeepSeek-backed decision_explanation generation (decision fields are fixed)."""
 
 from __future__ import annotations
 
 import json
 from typing import Any
 
-from llm.openrouter import DEFAULT_MODEL, assistant_message_from_response, chat_completions
-from llm.secrets import load_openrouter_api_key
+from llm.deepseek import DEFAULT_MODEL, assistant_message_from_response, chat_completions
+from llm.secrets import load_deepseek_api_key
 from llm.usage import get_usage
 from stage2.models import UserContextRow
 from stage2.image_amounts import image_evidence_for_request
@@ -26,6 +26,7 @@ Rules:
 
 
 def _compact_messages(messages: list[dict[str, str]], limit: int = 12) -> list[dict[str, str]]:
+    """Trim messages for the LLM prompt (recent rows, date + text only)."""
     rows: list[dict[str, str]] = []
     for message in messages[-limit:]:
         rows.append(
@@ -42,6 +43,7 @@ def build_explanation_payload(
     decision: DecisionRow,
     ledger: dict[str, Any] | None,
 ) -> dict[str, Any]:
+    """Build JSON context for the explanation LLM (decision fields are read-only)."""
     forecast = (ledger or {}).get("forecast") or {}
     payload: dict[str, Any] = {
         "request_id": context.request_id,
@@ -82,7 +84,8 @@ def generate_llm_decision_explanation(
     *,
     model: str = DEFAULT_MODEL,
 ) -> str:
-    api_key = load_openrouter_api_key()
+    """Call DeepSeek to generate decision_explanation text for one request."""
+    api_key = load_deepseek_api_key()
     payload = build_explanation_payload(context, decision, ledger)
     user_content = (
         "Write decision_explanation for this case.\n\n"
@@ -96,13 +99,12 @@ def generate_llm_decision_explanation(
         ],
         model=model,
         reasoning_enabled=False,
-        title="Buy or Wait decision explanation",
     )
     get_usage().record_success(response, model)
     message = assistant_message_from_response(response)
     text = (message.get("content") or "").strip()
     if not text:
-        raise RuntimeError("OpenRouter returned empty decision_explanation content")
+        raise RuntimeError("DeepSeek returned empty decision_explanation content")
     if len(text) > 600:
         text = text[:597].rstrip() + "..."
     return text

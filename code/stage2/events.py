@@ -1,3 +1,5 @@
+"""Filter financial events into home-currency cash ledger rows."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -7,6 +9,7 @@ from stage2.models import ExcludedEvent, ResolvedCashEvent
 
 
 def _parse_date(value: str) -> date:
+    """Parse ISO date strings from event fields."""
     return date.fromisoformat(value)
 
 
@@ -32,6 +35,7 @@ def _superseded_by_linked_event(resolved: list[ResolvedCashEvent]) -> set[str]:
 
 
 def _should_exclude(event: dict[str, str]) -> str | None:
+    """Return an exclusion reason code, or None if the event may enter the cash ledger."""
     status = (event.get("status") or "").strip().lower()
     direction = (event.get("direction") or "").strip().lower()
     event_type = (event.get("event_type") or "").strip().lower()
@@ -50,6 +54,7 @@ def _should_exclude(event: dict[str, str]) -> str | None:
 
 
 def _settlement_date(event: dict[str, str]) -> str:
+    """Prefer settlement_date, falling back to event_date."""
     settlement = (event.get("settlement_date") or "").strip()
     if settlement:
         return settlement
@@ -61,6 +66,7 @@ def resolve_cash_events(
     home_currency: str,
     fx: ExchangeRateTable,
 ) -> tuple[list[ResolvedCashEvent], list[ExcludedEvent]]:
+    """Filter, convert to home currency, and drop superseded events."""
     resolved: list[ResolvedCashEvent] = []
     excluded: list[ExcludedEvent] = []
 

@@ -1,3 +1,5 @@
+"""Stage 3 entry: affordability decisions, explanations, and output.csv."""
+
 from __future__ import annotations
 
 import csv
@@ -20,21 +22,26 @@ Mode = Literal["all", "sample", "eval"]
 
 @dataclass(frozen=True)
 class Stage3Result:
+    """Summary after writing output.csv and optional regression message."""
+
     output_path: Path
     row_count: int
     regression: str | None
 
 
 def _load_ledgers(path: Path) -> dict[str, dict]:
+    """Index resolved ledgers by user_id from Stage 2 JSON."""
     data = json.loads(path.read_text(encoding="utf-8"))
     return {ledger["user_id"]: ledger for ledger in data.get("ledgers", [])}
 
 
 def _expected_user_count(mode: Mode) -> int:
+    """Expected ledger count for cache validation before Stage 3."""
     return {"all": 275, "sample": 25, "eval": 250}[mode]
 
 
 def _ensure_ledgers(mode: Mode) -> Path:
+    """Return path to resolved_ledgers.json, rebuilding via Stage 2 if cache is stale."""
     ledger_path = TEMP_DATA_DIR / RESOLVED_LEDGERS_FILENAME
     expected = _expected_user_count(mode)
     rebuild = True
@@ -48,11 +55,13 @@ def _ensure_ledgers(mode: Mode) -> Path:
 
 
 def _output_request_ids() -> list[str]:
+    """Eval submission order from dataset/requests.csv."""
     with (DATASET_DIR / "requests.csv").open(newline="", encoding="utf-8") as handle:
         return [row["request_id"] for row in csv.DictReader(handle)]
 
 
 def _write_output_csv(rows: list[dict[str, str]], path: Path) -> None:
+    """Write final submission CSV with OUTPUT_COLUMNS header."""
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_COLUMNS, lineterminator="\n")
         writer.writeheader()
@@ -66,6 +75,7 @@ def run_stage3(
     use_llm_explanations: bool = True,
     offline_sample_explanations: bool = False,
 ) -> Stage3Result:
+    """Stage 3 entry: decide per user, explain, write output.csv, optional regression."""
     reset_usage()
     ledger_path = _ensure_ledgers(mode)
     ledgers_by_user = _load_ledgers(ledger_path)

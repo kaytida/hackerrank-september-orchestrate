@@ -1,3 +1,5 @@
+"""Stage 2 entry: resolve ledgers and 90-day forecasts for all users in scope."""
+
 from __future__ import annotations
 
 import json
@@ -16,12 +18,15 @@ Mode = Literal["all", "sample", "eval"]
 
 @dataclass(frozen=True)
 class Stage2Result:
+    """Metadata for resolved_ledgers.json written by Stage 2."""
+
     output_path: Path
     user_count: int
     mode: str
 
 
 def _mode_to_data_source(mode: Mode) -> str | None:
+    """Map pipeline mode to user_context data_source filter, or None for all users."""
     if mode == "all":
         return None
     if mode == "sample":
@@ -36,6 +41,7 @@ def run_stage2(
     user_context_path: Path | None = None,
     output_path: Path | None = None,
 ) -> Stage2Result:
+    """Build resolved ledgers (with 90-day forecast) for each user and write JSON."""
     data_source = _mode_to_data_source(mode)
     contexts = load_user_context_rows(path=user_context_path, data_source=data_source)
     if not contexts:

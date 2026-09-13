@@ -1,3 +1,5 @@
+"""Assemble one user's resolved ledger and forecast from UserContextRow."""
+
 from __future__ import annotations
 
 from stage2.events import resolve_cash_events
@@ -13,6 +15,7 @@ def build_resolved_ledger(
     fx: ExchangeRateTable,
     image_lookup: dict[str, dict[str, str]],
 ) -> ResolvedLedger:
+    """Resolve one user's cash events in home currency and attach a 90-day forecast."""
     events = apply_image_amounts(context.financial_events, image_lookup)
     events, patch_count = apply_message_patches(
         events, context.messages, context.request_date

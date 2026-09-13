@@ -8,6 +8,7 @@ from stage2.message_rules import EventPatch, interpret_messages
 
 
 def _parse_date(value: str) -> date:
+    """Parse request_date for comparing event settlement dates."""
     return date.fromisoformat(value)
 
 
@@ -16,6 +17,7 @@ def _apply_event_patch(
     patch: EventPatch,
     request_date: str,
 ) -> bool:
+    """Apply one EventPatch to the mutable events list; return True if something changed."""
     if patch.patch_type == "cancel_event" and patch.event_id:
         applied = False
         for event in events:
@@ -71,6 +73,7 @@ def apply_message_patches(
     messages: list[dict[str, str]],
     request_date: str,
 ) -> tuple[list[dict[str, str]], int]:
+    """Interpret messages and mutate events (cancel/reschedule) before FX resolution."""
     patched = [dict(event) for event in events]
     event_patches, _ = interpret_messages(messages, request_date)
     applied = 0

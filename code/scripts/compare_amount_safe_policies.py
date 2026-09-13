@@ -46,6 +46,7 @@ TUNED = {
 }
 
 def _policy_params_from_config() -> dict[str, float | None]:
+    """Load amount_safe stress parameters from config.py (production policy)."""
     from config import (
         AMOUNT_SAFE_FIRST_SALARY_RECURRING_STRESS,
         AMOUNT_SAFE_GIG_PENDING_RECURRING_STRESS,
@@ -80,6 +81,7 @@ def _amount_safe_flows_variant(
     spending_changes: str,
     params: dict[str, float | None],
 ) -> list[dict[str, Any]]:
+    """Mirror decide._amount_safe_flows using an explicit stress parameter map."""
     flows = apply_spending_changes(baseline_flows, cash_events, spending_changes)
     flows = _dedupe_salary_credits_for_amount_safe(flows)
     request_day = _parse_date(context.request_date)
@@ -128,10 +130,12 @@ def _amount_safe_flows_variant(
 
 
 def _fmt_amount(v: float) -> str:
+    """Format amounts for regression-style string comparison."""
     return f"{v:.2f}"
 
 
 def _compare(d: DecisionRow, labels: dict[str, str], tol: float = 1.0) -> dict[str, Any]:
+    """Compare one DecisionRow to gold labels with extra gap diagnostics."""
     pred = {
         "request_id": d.request_id,
         "amount_safe_to_pay": _fmt_amount(d.amount_safe_to_pay),
@@ -164,12 +168,15 @@ def _compare(d: DecisionRow, labels: dict[str, str], tol: float = 1.0) -> dict[s
 
 
 def _run_all(params: dict[str, float | None]) -> dict[str, DecisionRow]:
+    """Run decide_for_request on all sample users with patched _amount_safe_flows."""
+
     def flows_fn(
         baseline_flows: list[dict[str, Any]],
         cash_events: list[ResolvedCashEvent],
         context: UserContextRow,
         spending_changes: str,
     ) -> list[dict[str, Any]]:
+        """Temporary hook replacing decide._amount_safe_flows for this parameter set."""
         return _amount_safe_flows_variant(
             baseline_flows, cash_events, context, spending_changes, params
         )
@@ -191,6 +198,7 @@ def _run_all(params: dict[str, float | None]) -> dict[str, DecisionRow]:
 
 
 def main() -> None:
+    """Compare tuned vs config stress policies on sample set and write JSON report."""
     tuned = _run_all(TUNED)
     policy = _run_all(_policy_params_from_config())
 

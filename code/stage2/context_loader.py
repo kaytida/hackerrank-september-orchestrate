@@ -1,3 +1,5 @@
+"""Load Stage 1 user_context.csv into typed UserContextRow objects."""
+
 from __future__ import annotations
 
 import csv
@@ -9,6 +11,7 @@ from stage2.models import UserContextRow
 
 
 def _split_pipe(value: str) -> list[str]:
+    """Parse pipe-delimited profile/list fields from user_context CSV."""
     value = (value or "").strip()
     if not value:
         return []
@@ -16,10 +19,12 @@ def _split_pipe(value: str) -> list[str]:
 
 
 def _parse_bool(value: str) -> bool:
+    """Interpret common truthy string values from CSV."""
     return (value or "").strip().lower() in ("true", "1", "yes")
 
 
 def _parse_optional_int(value: str) -> int | None:
+    """Parse an integer field, returning None when empty."""
     value = (value or "").strip()
     if not value:
         return None
@@ -27,6 +32,7 @@ def _parse_optional_int(value: str) -> int | None:
 
 
 def _parse_sample_labels(raw: str) -> dict[str, str] | None:
+    """Deserialize sample_labels_json column; None for eval users."""
     if not raw or raw.strip() in ("", "null"):
         return None
     data = json.loads(raw)
@@ -34,6 +40,7 @@ def _parse_sample_labels(raw: str) -> dict[str, str] | None:
 
 
 def row_from_csv_dict(row: dict[str, str]) -> UserContextRow:
+    """Convert one user_context.csv row into a typed UserContextRow."""
     sample_labels = _parse_sample_labels(row.get("sample_labels_json", ""))
     return UserContextRow(
         user_id=row["user_id"],
@@ -72,6 +79,7 @@ def load_user_context_rows(
     path: Path | None = None,
     data_source: str | None = None,
 ) -> list[UserContextRow]:
+    """Load user_context.csv; optionally keep only sample or eval rows."""
     csv_path = path or (TEMP_DATA_DIR / USER_CONTEXT_FILENAME)
     if not csv_path.is_file():
         raise FileNotFoundError(

@@ -41,25 +41,31 @@ OUTPUT_COLUMNS = USER_CONTEXT_SCALAR_COLUMNS + USER_CONTEXT_JSON_COLUMNS
 
 @dataclass(frozen=True)
 class ConsolidationResult:
+    """Paths and counts produced by Stage 1 consolidation."""
+
     output_path: Path
     row_count: int
     mode: Mode
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
+    """Load a UTF-8 CSV file into a list of row dictionaries."""
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
 
 
 def _json_dumps(value: Any) -> str:
+    """Serialize nested structures for CSV JSON columns (compact, no ASCII escape)."""
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
 def _image_path(image_id: str) -> str:
+    """Return the dataset-relative path string stored in user_context for an image."""
     return f"dataset/media/images/{image_id}.png"
 
 
 def _enrich_images(images: list[dict[str, str]]) -> list[dict[str, str]]:
+    """Attach image_path and image_file_present to each image metadata row."""
     enriched: list[dict[str, str]] = []
     for row in images:
         image_id = row["image_id"]
@@ -75,6 +81,7 @@ def _enrich_images(images: list[dict[str, str]]) -> list[dict[str, str]]:
 
 
 def _sample_labels_from_row(row: dict[str, str]) -> dict[str, str]:
+    """Extract gold label columns from a sample_requests.csv row."""
     return {key: row.get(key, "") for key in SAMPLE_LABEL_COLUMNS}
 
 
@@ -86,6 +93,7 @@ def _validate_referential_integrity(
     requests_by_user: dict[str, dict[str, str]],
     images_by_user: dict[str, list[dict[str, str]]],
 ) -> None:
+    """Raise ValueError if dataset links, counts, or image files are inconsistent."""
     errors: list[str] = []
     for user_id in users:
         if user_id not in profiles:
@@ -167,6 +175,7 @@ def _build_request_maps() -> tuple[
 def _select_users(
     source: dict[str, Literal["sample", "eval"]], mode: Mode
 ) -> list[str]:
+    """Return sorted user_ids included for the given pipeline mode."""
     if mode == "all":
         return sorted(source.keys(), key=_user_sort_key)
     if mode == "sample":
@@ -181,12 +190,14 @@ def _select_users(
 
 
 def _user_sort_key(user_id: str) -> int:
+    """Sort key: numeric suffix of user_NNN, else 0."""
     if user_id.startswith("user_"):
         return int(user_id.split("_", 1)[1])
     return 0
 
 
 def build_user_context_rows(mode: Mode = "all") -> list[dict[str, str]]:
+    """Join dataset tables into one dict per user, validated and filtered by mode."""
     profiles_list = _read_csv(DATASET_DIR / "financial_profiles.csv")
     profiles = {row["user_id"]: row for row in profiles_list}
 
@@ -263,6 +274,7 @@ def build_user_context_rows(mode: Mode = "all") -> list[dict[str, str]]:
 
 
 def write_user_context_csv(rows: list[dict[str, str]], output_path: Path) -> None:
+    """Write consolidated rows to user_context.csv with the fixed OUTPUT_COLUMNS schema."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_COLUMNS, lineterminator="\n")
@@ -271,6 +283,7 @@ def write_user_context_csv(rows: list[dict[str, str]], output_path: Path) -> Non
 
 
 def run_stage1(mode: Mode = "all") -> ConsolidationResult:
+    """Stage 1 entry: build user_context.csv under temp_data and return result metadata."""
     rows = build_user_context_rows(mode=mode)
     output_path = TEMP_DATA_DIR / USER_CONTEXT_FILENAME
     write_user_context_csv(rows, output_path)

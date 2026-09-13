@@ -27,6 +27,8 @@ COMPARE_FIELDS = [
 
 @dataclass(frozen=True)
 class RegressionSummary:
+    """Counts and path after comparing sample predictions to labels."""
+
     total: int
     passed: int
     failed: int
@@ -34,10 +36,12 @@ class RegressionSummary:
 
 
 def _parse_amount(value: str) -> float:
+    """Parse amount strings from CSV/regression comparisons."""
     return float(value) if value else 0.0
 
 
 def _amounts_close(a: str, b: str, tol: float = 1.0) -> bool:
+    """True if two amount strings are within absolute tolerance."""
     return abs(_parse_amount(a) - _parse_amount(b)) <= tol
 
 
@@ -46,6 +50,7 @@ def compare_to_labels(
     labels: dict[str, str],
     amount_tolerance: float = 0.0,
 ) -> dict[str, Any]:
+    """Compare predicted output row to gold labels; return pass flag and mismatches."""
     mismatches: list[dict[str, str]] = []
     for field in COMPARE_FIELDS:
         pred = (predicted.get(field) or "").strip()
@@ -67,6 +72,7 @@ def run_sample_regression(
     sample_labels_by_request: dict[str, dict[str, str]],
     amount_tolerance: float = 1.0,
 ) -> RegressionSummary:
+    """Run label comparison for all sample predictions and write regression_report.json."""
     results: list[dict[str, Any]] = []
     passed = 0
     for row in predictions:

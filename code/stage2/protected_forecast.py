@@ -12,10 +12,12 @@ from stage2.recurrence import add_calendar_month
 
 
 def _parse_date(value: str) -> date:
+    """Parse flow and event dates for monthly aggregation."""
     return date.fromisoformat(value)
 
 
 def _month_key(d: date) -> tuple[int, int]:
+    """Calendar month bucket for spend totals."""
     return (d.year, d.month)
 
 
@@ -24,6 +26,7 @@ def _max_monthly_category_spend(
     category: str,
     request_date: date,
 ) -> float:
+    """Peak calendar-month settled debit total for category before request_date."""
     totals: dict[tuple[int, int], float] = {}
     for event in cash_events:
         if event.status != "settled" or event.direction != "debit":
@@ -47,6 +50,7 @@ def _category_debits_in_month(
     year: int,
     month: int,
 ) -> float:
+    """Sum projected debit amount_home for category in a given month."""
     total = 0.0
     for flow in flows:
         if flow.get("direction") != "debit":

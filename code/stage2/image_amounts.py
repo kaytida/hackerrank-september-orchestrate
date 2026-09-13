@@ -8,6 +8,7 @@ from config import IMAGES_LOOKUP_FILENAME, TEMP_DATA_DIR
 
 
 def _load_images_document(path: Path | None = None) -> dict[str, Any]:
+    """Read temp_data/images.json if present; otherwise return {}."""
     json_path = path or (TEMP_DATA_DIR / IMAGES_LOOKUP_FILENAME)
     if not json_path.is_file():
         return {}
@@ -16,6 +17,7 @@ def _load_images_document(path: Path | None = None) -> dict[str, Any]:
 
 
 def load_image_amount_lookup(path: Path | None = None) -> dict[str, dict[str, str]]:
+    """Return event_id -> resolved amount metadata from images.json quick_lookup."""
     data = _load_images_document(path)
     quick = data.get("quick_lookup", {})
     if not isinstance(quick, dict):
@@ -57,6 +59,7 @@ def apply_image_amounts(
     events: list[dict[str, str]],
     lookup: dict[str, dict[str, str]],
 ) -> list[dict[str, str]]:
+    """Fill blank event amounts from the image lookup and tag _amount_source."""
     patched: list[dict[str, str]] = []
     for event in events:
         event_id = event["event_id"]

@@ -17,6 +17,7 @@ class ExchangeRateTable:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "ExchangeRateTable":
+        """Load dated FX rates from exchange_rates.csv."""
         csv_path = path or EXCHANGE_RATES_PATH
         rates: dict[tuple[str, str, str], float] = {}
         dates: set[str] = set()
@@ -28,6 +29,7 @@ class ExchangeRateTable:
         return cls(_rates=rates, _dates=sorted(dates))
 
     def _rate_on_or_before(self, from_currency: str, to_currency: str, on_date: str) -> float | None:
+        """Latest direct rate on or before on_date, or None."""
         if from_currency == to_currency:
             return 1.0
         best_rate: float | None = None
@@ -44,12 +46,14 @@ class ExchangeRateTable:
         return best_rate
 
     def _inverse_on_or_before(self, from_currency: str, to_currency: str, on_date: str) -> float | None:
+        """Derive rate via inverse pair when direct quote is missing."""
         direct = self._rate_on_or_before(to_currency, from_currency, on_date)
         if direct is None or direct == 0:
             return None
         return 1.0 / direct
 
     def convert(self, amount: float, from_currency: str, to_currency: str, on_date: str) -> float:
+        """Convert amount using direct, inverse, or USD/EUR bridge rates on or before on_date."""
         if from_currency == to_currency:
             return amount
         direct = self._rate_on_or_before(from_currency, to_currency, on_date)

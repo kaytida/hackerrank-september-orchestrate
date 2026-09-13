@@ -29,6 +29,8 @@ class ForecastAdjustment:
 
 @dataclass
 class EventPatch:
+    """Instruction to mutate raw financial_events before FX resolution."""
+
     patch_type: str
     event_id: str | None = None
     details: dict[str, Any] = field(default_factory=dict)
@@ -60,14 +62,17 @@ _PERCENT_RE = re.compile(
 
 
 def _norm(text: str) -> str:
+    """Lowercase message text for phrase matching."""
     return (text or "").lower()
 
 
 def _parse_amount(raw: str) -> float:
+    """Parse numeric amount strings that may contain thousands separators."""
     return float(raw.replace(",", ""))
 
 
 def _extract_salary_amount(text: str) -> tuple[str | None, float] | None:
+    """Extract (currency, amount) from salary-related phrases, or None."""
     match = _SALARY_AMOUNT_RE.search(text)
     if not match:
         return None
@@ -79,6 +84,7 @@ def _extract_salary_amount(text: str) -> tuple[str | None, float] | None:
 
 
 def _extract_invoice_amount(text: str) -> tuple[str | None, float] | None:
+    """Extract (currency, amount) from approved-invoice phrases, or None."""
     match = _INVOICE_AMOUNT_RE.search(text)
     if not match:
         return None
@@ -87,6 +93,7 @@ def _extract_invoice_amount(text: str) -> tuple[str | None, float] | None:
 
 
 def _extract_dates(text: str) -> list[str]:
+    """Find ISO dates (20YY-MM-DD) mentioned in message text."""
     return _DATE_RE.findall(text)
 
 
@@ -100,6 +107,7 @@ def interpret_messages(
     seen_adj: set[str] = set()
 
     def add_adj(adj: ForecastAdjustment) -> None:
+        """Append a forecast adjustment once per adjustment_id."""
         if adj.adjustment_id in seen_adj:
             return
         seen_adj.add(adj.adjustment_id)

@@ -1,3 +1,5 @@
+"""Spending change strings applied to projected flows during planning."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -7,6 +9,7 @@ from stage2.recurrence import recurrence_key
 
 
 def _event_by_id(cash_events: list[ResolvedCashEvent], event_id: str) -> ResolvedCashEvent | None:
+    """Find a resolved event by event_id."""
     for event in cash_events:
         if event.event_id == event_id:
             return event
@@ -18,6 +21,7 @@ def apply_spending_changes(
     cash_events: list[ResolvedCashEvent],
     spending_changes: str,
 ) -> list[dict[str, Any]]:
+    """Apply stop:/reduce_to: tokens to recurring projected flows."""
     if not spending_changes or spending_changes == "none":
         return list(baseline_flows)
 

@@ -1,1 +1,1 @@
-"""LLM integration (OpenRouter)."""
+"""LLM integration (DeepSeek platform API)."""

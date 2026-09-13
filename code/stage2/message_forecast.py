@@ -13,11 +13,13 @@ def get_message_forecast_adjustments(
     messages: list[dict[str, str]],
     request_date: str,
 ) -> list[ForecastAdjustment]:
+    """Return forecast-only adjustments derived from the same rules as event patches."""
     _, forecast_adjustments = interpret_messages(messages, request_date)
     return forecast_adjustments
 
 
 def _is_payroll_flow(flow: dict[str, Any]) -> bool:
+    """True if a projected flow represents salary or payroll income."""
     desc = (flow.get("description") or "").lower()
     category = (flow.get("category") or "").lower()
     return category == "salary" or "payroll" in desc
@@ -29,6 +31,7 @@ def apply_forecast_adjustments(
     *,
     home_currency: str = "",
 ) -> tuple[list[dict[str, Any]], int]:
+    """Apply message-driven adjustments to projected flows; return (flows, applied_count)."""
     if not adjustments:
         return flows, 0
 

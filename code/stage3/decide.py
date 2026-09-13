@@ -1,3 +1,5 @@
+"""Per-request affordability engine: amount safe, plans, and ranking."""
+
 from __future__ import annotations
 
 import math
@@ -34,10 +36,12 @@ from stage3.spending import apply_spending_changes, enumerate_spending_candidate
 
 
 def _parse_date(value: str) -> date:
+    """Parse ISO dates for scans and comparisons."""
     return date.fromisoformat(value)
 
 
 def _has_gig_pending_message(messages: list[dict[str, str]]) -> bool:
+    """True if messages indicate a gig payout is still pending and not withdrawable."""
     for message in messages:
         lower = (message.get("message_text") or "").lower()
         if "payout is still pending" in lower and "withdrawable" in lower:
@@ -51,6 +55,7 @@ def _stress_debit_flows(
     all_debits_factor: float = 1.0,
     recurring_debits_factor: float = 1.0,
 ) -> list[dict[str, Any]]:
+    """Scale debit flows for conservative amount_safe_to_pay simulation."""
     stressed: list[dict[str, Any]] = []
     for flow in flows:
         signed = float(flow.get("signed_amount", 0))
@@ -103,6 +108,7 @@ def _amount_safe_flows(
     context: UserContextRow,
     spending_changes: str,
 ) -> list[dict[str, Any]]:
+    """Apply spending changes, salary dedupe, and config stress multipliers for amount_safe."""
     flows = apply_spending_changes(baseline_flows, cash_events, spending_changes)
     flows = _dedupe_salary_credits_for_amount_safe(flows)
     request_day = _parse_date(context.request_date)
@@ -152,6 +158,7 @@ def _amount_safe_flows(
 
 
 def _cash_events_from_ledger(ledger: dict[str, Any]) -> list[ResolvedCashEvent]:
+    """Rehydrate ResolvedCashEvent objects from resolved_ledgers JSON."""
     events: list[ResolvedCashEvent] = []
     for raw in ledger.get("cash_events", []):
         min_raw = raw.get("minimum_allowed_amount")
@@ -183,6 +190,7 @@ def _is_plan_safe(
     baseline_flows: list[dict[str, Any]],
     payments: list[tuple[str, float]],
 ) -> bool:
+    """True if payment plan keeps 90-day balances at or above minimum (unstressed baseline)."""
     return is_balance_safe(
         ledger["request_date"],
         float(ledger["starting_balance_home"]),
@@ -197,6 +205,7 @@ def _scan_earliest_full_payment_date(
     context: UserContextRow,
     flows: list[dict[str, Any]],
 ) -> str:
+    """First calendar day a single full payment passes the 90-day safety check."""
     request_date = _parse_date(context.request_date)
     horizon_end = request_date + timedelta(days=FORECAST_HORIZON_DAYS)
     amount = context.requested_amount
@@ -216,6 +225,7 @@ def compute_earliest_full_payment_date(
     baseline_flows: list[dict[str, Any]],
     spending_changes: str = "none",
 ) -> str:
+    """First date a single full payment passes the 90-day check (problem_statement §90-Day Safety Check)."""
     flows = apply_spending_changes(baseline_flows, cash_events, spending_changes)
     return _scan_earliest_full_payment_date(ledger, context, flows)
 
@@ -227,6 +237,7 @@ def compute_reported_earliest_full_payment_date(
     baseline_flows: list[dict[str, Any]],
     spending_changes: str = "none",
 ) -> str:
+    """Earliest full payment date using stressed flows (reported output field)."""
     flows = _amount_safe_flows(
         baseline_flows, cash_events, context, spending_changes
     )
@@ -240,6 +251,7 @@ def compute_amount_safe_to_pay(
     baseline_flows: list[dict[str, Any]],
     spending_changes: str = "none",
 ) -> float:
+    """Largest same-day payment (capped at requested) that passes stressed 90-day check."""
     flows = _amount_safe_flows(
         baseline_flows, cash_events, context, spending_changes
     )
@@ -260,9 +272,22 @@ def compute_amount_safe_to_pay(
     return math.floor(capped * 100 + 1e-9) / 100
 
 
-def _rank_key(plan: CandidatePlan) -> tuple:
+def _rank_key(
+    plan: CandidatePlan,
+    *,
+    request_date: str,
+    conservative_earliest_full: str,
+) -> tuple:
+    """Sort key: prefer plans that meet deadline with minimal spending and pay."""
+    pay_today_with_spending = (
+        plan.recommended_payment_method == "full_payment"
+        and plan.first_payment_date == request_date
+        and plan.spending_changes_needed != "none"
+        and conservative_earliest_full > request_date
+    )
     return (
         0 if plan.completes_by_deadline else 1,
+        1 if pay_today_with_spending else 0,
         0 if plan.spending_changes_needed == "none" else 1,
         plan.total_paid,
         plan.first_payment_date or "9999-99-99",
@@ -272,6 +297,7 @@ def _rank_key(plan: CandidatePlan) -> tuple:
 
 
 def _partial_remainder_is_meaningful(requested: float, amount_safe: float) -> bool:
+    """True if partial payment would leave a non-trivial remainder."""
     remainder = requested - amount_safe
     return remainder >= max(1.0, requested * 0.01)
 
@@ -287,6 +313,7 @@ def _collect_candidates(
     earliest_full_no_changes: str,
     amount_safe_no_changes: float,
 ) -> list[CandidatePlan]:
+    """Build feasible payment-method candidates for one spending_changes option."""
     flows = apply_spending_changes(baseline_flows, cash_events, spending_changes)
     flows_none = apply_spending_changes(baseline_flows, cash_events, "none")
     candidates: list[CandidatePlan] = []
@@ -297,35 +324,31 @@ def _collect_candidates(
     full_pay = [(request_date, requested)]
     full_safe_with_spending = _is_plan_safe(ledger, flows, full_pay)
     full_safe_without_spending = _is_plan_safe(ledger, flows_none, full_pay)
-
-    if (
-        earliest_full_no_changes == request_date
-        and user_accepts_method(context, "full_payment")
-        and full_safe_with_spending
-    ):
-        can_afford_now = not _partial_remainder_is_meaningful(
-            requested, amount_safe_no_changes
-        )
-        if spending_changes == "none":
-            if not full_safe_without_spending:
-                pass
-            elif can_afford_now:
-                status = "affordable_now"
-                candidates.append(
-                    CandidatePlan(
-                        affordability_status=status,
-                        recommended_payment_method="full_payment",
-                        payment_plan=full_pay,
-                        earliest_date_for_full_payment=request_date,
-                        spending_changes_needed=spending_changes,
-                        total_paid=requested,
-                        payment_count=1,
-                        first_payment_date=request_date,
-                        payment_option_id=None,
-                        completes_by_deadline=True,
-                    )
+    can_afford_now = not _partial_remainder_is_meaningful(
+        requested, amount_safe_no_changes
+    )
+    if user_accepts_method(context, "full_payment") and full_safe_with_spending:
+        if (
+            spending_changes == "none"
+            and earliest_full_no_changes == request_date
+            and full_safe_without_spending
+            and can_afford_now
+        ):
+            candidates.append(
+                CandidatePlan(
+                    affordability_status="affordable_now",
+                    recommended_payment_method="full_payment",
+                    payment_plan=full_pay,
+                    earliest_date_for_full_payment=request_date,
+                    spending_changes_needed=spending_changes,
+                    total_paid=requested,
+                    payment_count=1,
+                    first_payment_date=request_date,
+                    payment_option_id=None,
+                    completes_by_deadline=True,
                 )
-        elif not full_safe_without_spending:
+            )
+        elif spending_changes != "none" and not full_safe_without_spending:
             candidates.append(
                 CandidatePlan(
                     affordability_status="affordable_with_plan",
@@ -341,7 +364,7 @@ def _collect_candidates(
                 )
             )
         elif (
-            full_safe_with_spending
+            spending_changes != "none"
             and amount_safe_no_changes < requested - 0.01
         ):
             candidates.append(
@@ -422,6 +445,7 @@ def decide_for_request(
     context: UserContextRow,
     ledger: dict[str, Any],
 ) -> DecisionRow:
+    """Choose affordability status, payment method, plan, and amounts for one request."""
     forecast = ledger.get("forecast", {})
     baseline_flows = list(forecast.get("projected_flows", []))
     cash_events = _cash_events_from_ledger(ledger)
@@ -435,22 +459,20 @@ def decide_for_request(
     amount_safe_no_changes = compute_amount_safe_to_pay(
         ledger, context, cash_events, baseline_flows, "none"
     )
-    earliest_no_changes = compute_earliest_full_payment_date(
-        ledger, context, cash_events, baseline_flows, "none"
-    )
     reported_earliest_no_changes = compute_reported_earliest_full_payment_date(
         ledger, context, cash_events, baseline_flows, "none"
     )
+    request_date = context.request_date
 
     best_plan: CandidatePlan | None = None
     best_amount_safe = amount_safe_no_changes
-    best_earliest = earliest_no_changes
+    best_earliest = reported_earliest_no_changes
 
     for spending in spending_options:
         amount_for_spending = compute_amount_safe_to_pay(
             ledger, context, cash_events, baseline_flows, spending
         )
-        earliest_for_spending = compute_earliest_full_payment_date(
+        reported_earliest_for_spending = compute_reported_earliest_full_payment_date(
             ledger, context, cash_events, baseline_flows, spending
         )
         candidates = _collect_candidates(
@@ -460,19 +482,24 @@ def decide_for_request(
             baseline_flows,
             spending,
             amount_for_spending,
-            earliest_for_spending,
-            earliest_no_changes,
+            reported_earliest_for_spending,
+            reported_earliest_no_changes,
             amount_safe_no_changes,
         )
         if not candidates:
             continue
-        ranked = sorted(candidates, key=_rank_key)
+        rank = lambda p: _rank_key(
+            p,
+            request_date=request_date,
+            conservative_earliest_full=reported_earliest_no_changes,
+        )
+        ranked = sorted(candidates, key=rank)
         plan = ranked[0]
-        plan_key = _rank_key(plan)
+        plan_key = rank(plan)
         if best_plan is None:
             take = True
         else:
-            prev_key = _rank_key(best_plan)
+            prev_key = rank(best_plan)
             take = plan_key < prev_key
             if plan_key == prev_key and (
                 plan.spending_changes_needed > best_plan.spending_changes_needed
@@ -482,9 +509,15 @@ def decide_for_request(
             best_plan = plan
             best_amount_safe = amount_for_spending
             if plan.affordability_status == "affordable_now":
-                best_earliest = context.request_date
+                best_earliest = request_date
             elif plan.affordability_status == "not_affordable":
                 best_earliest = ""
+            elif plan.recommended_payment_method == "wait":
+                best_earliest = plan.first_payment_date or ""
+            elif plan.recommended_payment_method == "partial_payment":
+                best_earliest = (
+                    plan.earliest_date_for_full_payment or reported_earliest_no_changes
+                )
             else:
                 best_earliest = reported_earliest_no_changes
 

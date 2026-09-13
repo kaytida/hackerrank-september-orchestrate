@@ -15,10 +15,12 @@ from stage2.models import ResolvedCashEvent
 
 
 def _parse_date(value: str) -> date:
+    """Parse ISO settlement dates for gap calculations."""
     return date.fromisoformat(value)
 
 
 def recurrence_key(event: ResolvedCashEvent) -> str:
+    """Stable key grouping events into a recurrence series (category|type|description)."""
     description = (event.description or "").strip().lower()
     return "|".join(
         [
@@ -30,6 +32,7 @@ def recurrence_key(event: ResolvedCashEvent) -> str:
 
 
 def _classify_interval(median_days: float) -> str | None:
+    """Map median gap in days to weekly, biweekly, or monthly cadence."""
     if 5 <= median_days <= 9:
         return "weekly"
     if 12 <= median_days <= 17:
@@ -40,10 +43,12 @@ def _classify_interval(median_days: float) -> str | None:
 
 
 def _is_variable_category(category: str) -> bool:
+    """True if category is treated as discretionary/variable for projection rules."""
     return category.strip().lower() in VARIABLE_SPEND_CATEGORIES
 
 
 def _is_high_noise_variable(category: str) -> bool:
+    """True for high-churn variable categories limited to monthly projection."""
     return category.strip().lower() in HIGH_NOISE_VARIABLE_CATEGORIES
 
 
@@ -59,6 +64,7 @@ def add_calendar_month(value: date) -> date:
 
 
 def advance_recurrence_date(current: date, series: dict[str, object]) -> date:
+    """Step one recurrence period forward using monthly calendar or gap days."""
     interval = str(series.get("interval") or "")
     if interval == "monthly":
         return add_calendar_month(current)
@@ -70,6 +76,7 @@ def _project_amount(
     events: list[ResolvedCashEvent],
     protected_categories: frozenset[str] | None = None,
 ) -> float:
+    """Choose projected amount_home for a series from history (median/max rules)."""
     _ = protected_categories
     amounts = [e.amount_home for e in events]
     category = events[-1].category

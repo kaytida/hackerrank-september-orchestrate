@@ -1,3 +1,5 @@
+"""Output schema and internal plan/decision datatypes for Stage 3."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -17,6 +19,8 @@ OUTPUT_COLUMNS = [
 
 @dataclass
 class DecisionRow:
+    """Deterministic decision fields for one request before explanation text."""
+
     request_id: str
     request_date: str
     amount_safe_to_pay: float
@@ -27,6 +31,7 @@ class DecisionRow:
     spending_changes_needed: str
 
     def to_output_dict(self, explanation: str) -> dict[str, str]:
+        """Merge decision fields with decision_explanation for CSV rows."""
         return {
             "request_id": self.request_id,
             "amount_safe_to_pay": _fmt_amount(self.amount_safe_to_pay),
@@ -41,6 +46,8 @@ class DecisionRow:
 
 @dataclass
 class CandidatePlan:
+    """Internal representation of a payment option under evaluation."""
+
     affordability_status: str
     recommended_payment_method: str
     payment_plan: list[tuple[str, float]]
@@ -54,6 +61,7 @@ class CandidatePlan:
 
 
 def _fmt_amount(value: float) -> str:
+    """Format monetary amounts for CSV (integers without .0 when whole)."""
     if abs(value - round(value)) < 1e-9:
         return str(int(round(value)))
     text = f"{value:.2f}".rstrip("0").rstrip(".")

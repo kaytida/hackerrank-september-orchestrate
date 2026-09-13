@@ -48,28 +48,8 @@
       "mismatches": [
         {
           "field": "amount_safe_to_pay",
-          "predicted": "12323579.48",
+          "predicted": "11937879.48",
           "expected": "8401800"
-        },
-        {
-          "field": "affordability_status",
-          "predicted": "affordable_with_plan",
-          "expected": "affordable_later"
-        },
-        {
-          "field": "recommended_payment_method",
-          "predicted": "full_payment",
-          "expected": "wait"
-        },
-        {
-          "field": "payment_plan",
-          "predicted": "2024-06-04:12693000",
-          "expected": "2024-06-15:12693000"
-        },
-        {
-          "field": "spending_changes_needed",
-          "predicted": "stop:event_287",
-          "expected": "none"
         }
       ]
     },

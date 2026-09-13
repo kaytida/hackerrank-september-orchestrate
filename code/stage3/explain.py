@@ -1,4 +1,4 @@
-"""Decision explanations (OpenRouter LLM with deterministic fallback)."""
+"""Decision explanations (DeepSeek LLM with deterministic fallback)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ _llm_warned = False
 
 
 def _stub_explanation(decision: DecisionRow, home_currency: str) -> str:
+    """Deterministic one-line explanation when LLM is disabled or fails."""
     method = decision.recommended_payment_method
     status = decision.affordability_status
     amount = decision.amount_safe_to_pay
@@ -23,6 +24,7 @@ def _stub_explanation(decision: DecisionRow, home_currency: str) -> str:
 
 
 def _sample_gold_explanation(context: UserContextRow) -> str | None:
+    """Return gold decision_explanation from sample labels when present."""
     labels = context.sample_labels or {}
     text = (labels.get("decision_explanation") or "").strip()
     return text or None
@@ -36,6 +38,7 @@ def generate_decision_explanation(
     use_llm: bool = True,
     offline_sample_explanations: bool = False,
 ) -> str:
+    """Produce decision_explanation via offline gold, LLM, or stub fallback."""
     gold = _sample_gold_explanation(context) if context.data_source == "sample" else None
 
     if offline_sample_explanations and gold:

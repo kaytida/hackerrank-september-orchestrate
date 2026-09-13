@@ -1,39 +1,122 @@
 # Buy or Wait? — Code Runner
 
-Entry point: `main.py` (run from the repository root unless noted).
+Python pipeline that reads `dataset/` and writes **`output.csv`** at the repository root (submission file).
+
+**Working directory:** run commands from the **repository root** (`hackerrank-orchestrate-september26/`), not from `code/`.
 
 ```bash
 python code/main.py [options]
 ```
 
-All paths below are relative to the **repository root** (`hackerrank-orchestrate-september26/`).
+Show all flags:
+
+```bash
+python code/main.py --help
+```
+
+---
+
+## Quick start — generate submission `output.csv`
+
+For the HackerRank eval set (**250 rows**, one per row in `dataset/requests.csv`):
+
+```bash
+python code/main.py
+```
+
+Same as `python code/main.py --mode all`: runs Stage 1 → 2 → 3, then writes `output.csv` next to `dataset/`.
+
+**Without DeepSeek** (deterministic stub text in `decision_explanation`; no API key):
+
+```bash
+python code/main.py --stub-explanations
+```
+
+**With LLM explanations** (default): set `DEEPSEEK_API_KEY` in the environment or in repo-root `.secrets.json` (see [Secrets](#secrets-for-llm-explanations)).
+
+On success you should see paths printed for intermediate files and a line like `Wrote 250 rows -> .../output.csv`.
 
 ---
 
 ## Prerequisites
 
-- Python 3.10+ (3.12 tested)
-- Dataset unchanged under `dataset/` (read-only inputs)
-- `code/temp_data/images.json` — hand-extracted image amounts (no vision LLM required)
+- Python **3.10+** (3.12 tested)
+- Unmodified challenge data under `dataset/`
+- `code/temp_data/images.json` — hand-extracted image amounts (vision API not required)
 
-Stage 3 reads `code/temp_data/user_context.csv`. If it is missing, run Stage 1 first. Stage 3 rebuilds `code/temp_data/resolved_ledgers.json` automatically when the file is missing or its `mode` / `user_count` does not match the current `--mode`.
+**Stage order:** Stage 3 needs `code/temp_data/user_context.csv` (Stage 1). It rebuilds `code/temp_data/resolved_ledgers.json` via Stage 2 automatically if that file is missing or its stored `mode` / `user_count` does not match the current `--mode`.
 
 ---
 
-## CLI reference
+## CLI options (complete)
 
-| Flag | Description |
-|------|-------------|
-| *(none)* | Run **Stage 1 → 2 → 3** with `--mode all` |
-| `--mode all` | 275 users (25 sample + 250 eval) in Stages 1–2; Stage 3 uses all contexts for decisions where needed |
-| `--mode sample` | 25 public sample users only (`sample_requests.csv`) |
-| `--mode eval` | 250 held-out eval users only (`requests.csv`) |
-| `--stage1-only` | Consolidation only → `code/temp_data/user_context.csv` |
-| `--stage2-only` | Ledger + 90-day forecast → `code/temp_data/resolved_ledgers.json` |
-| `--stage3-only` | Decisions + `output.csv` (+ regression when applicable) |
-| `--no-regression` | Skip writing `code/temp_data/regression_report.json` in Stage 3 |
+| Flag | Default | Description |
+|------|---------|-------------|
+| *(no stage flags)* | — | Run **Stage 1 → 2 → 3** in one process |
+| `--mode all` | **yes** (`all`) | Stages 1–2: **275** users (25 sample + 250 eval). Stage 3: writes **250** eval rows to `output.csv` (sample users still processed for regression context). |
+| `--mode sample` | — | **25** sample users only (`sample_requests.csv`). Stage 3 writes **25** rows to `output.csv`. |
+| `--mode eval` | — | **250** eval users only (`requests.csv`). Stage 3 writes **250** rows to `output.csv`. |
+| `--stage1-only` | off | Consolidation only → `code/temp_data/user_context.csv` |
+| `--stage2-only` | off | Ledger + 90-day forecast → `code/temp_data/resolved_ledgers.json` |
+| `--stage3-only` | off | Decisions + `output.csv` (+ optional regression) |
+| `--no-regression` | off | Do not write `code/temp_data/regression_report.json` in Stage 3 |
+| `--stub-explanations` | off | Skip DeepSeek; use deterministic explanation stubs |
+| `--offline-explanations` | off | For **sample** users only, copy gold `decision_explanation` from labels (no API). Eval rows still use LLM unless `--stub-explanations` is also set |
 
-Only one of `--stage1-only`, `--stage2-only`, `--stage3-only` may be used at a time.
+**Constraints**
+
+- Use **at most one** of `--stage1-only`, `--stage2-only`, `--stage3-only`.
+- `--mode` applies to whichever stage(s) you run.
+
+**Combining flags (examples)**
+
+| Goal | Command |
+|------|---------|
+| Full submission pipeline | `python code/main.py` |
+| Full pipeline, no API | `python code/main.py --stub-explanations` |
+| Regenerate predictions only | `python code/main.py --stage3-only --mode all` |
+| Fast sample calibration (25-row output) | `python code/main.py --mode sample` |
+| Stage 3 sample, no regression file | `python code/main.py --stage3-only --mode sample --no-regression` |
+| Eval users in intermediates only | `python code/main.py --stage1-only --mode eval` then stage 2/3 with `--mode eval` |
+
+---
+
+## How `--mode` affects `output.csv`
+
+| `--mode` | Rows in `output.csv` | `request_id` source |
+|----------|----------------------|---------------------|
+| `all` | **250** | `dataset/requests.csv` (eval order) |
+| `eval` | **250** | `dataset/requests.csv` |
+| `sample` | **25** | Sample users in consolidated context (`request_01` … `request_25`) |
+
+Upload **`--mode all`** (or default) output for the contest: **250 data rows + header**, columns in challenge order.
+
+---
+
+## Secrets for LLM explanations
+
+Stage 3 calls the **DeepSeek platform API** (`https://api.deepseek.com/chat/completions`, model `deepseek-chat`) for `decision_explanation` when neither `--stub-explanations` nor `--offline-explanations` is set.
+
+1. **Environment:** `DEEPSEEK_API_KEY=...`
+2. **Or** repo-root `.secrets.json` (gitignored):
+
+```json
+{
+  "DEEPSEEK_API_KEY": "sk-..."
+}
+```
+
+(Also accepts `deepseek_api_key` or `deepseek` as the JSON key name.)
+
+Run on a network that can reach `api.deepseek.com`. Smoke test:
+
+```bash
+python code/test_deepseek.py
+```
+
+If the API is unreachable (e.g. corporate firewall), use `--stub-explanations` or `--offline-explanations` instead of changing the client.
+
+After an LLM run, token usage is written under `code/temp_data/` (see printed `LLM usage -> ...` line).
 
 ---
 
@@ -46,31 +129,25 @@ Only one of `--stage1-only`, `--stage2-only`, `--stage3-only` may be used at a t
 | `code/temp_data/regression_report.json` | Stage 3 | Sample vs gold field mismatches (when regression runs) |
 | `output.csv` | Stage 3 | **Submission file** (repo root) |
 
-`output.csv` columns (in order):  
+`output.csv` columns (in order):
+
 `request_id`, `amount_safe_to_pay`, `affordability_status`, `recommended_payment_method`, `payment_plan`, `earliest_date_for_full_payment`, `spending_changes_needed`, `decision_explanation`
 
-`decision_explanation` uses **OpenRouter** by default (`code/llm/`); pass `--stub-explanations` to skip API calls.
+Affordability and payment fields are **deterministic** (Stages 2–3 planner). Only `decision_explanation` is LLM-generated unless you pass `--stub-explanations` or `--offline-explanations` for sample rows.
 
 ---
 
 ## Regression testing (25 sample requests)
 
-Sample gold labels live in `user_context.csv` (`sample_labels_json`) for `data_source=sample` users (`request_01` … `request_25`).
+Gold labels are in `user_context.csv` (`sample_labels_json`) for `data_source=sample` users.
 
-Regression runs when Stage 3 processes at least one sample user and `--no-regression` is **not** set. It compares these fields to gold (default **±1** tolerance on `amount_safe_to_pay`):
+Regression runs when Stage 3 processes at least one sample user and `--no-regression` is **not** set. Compared fields (default **±1** tolerance on `amount_safe_to_pay`):
 
-- `amount_safe_to_pay`
-- `affordability_status`
-- `recommended_payment_method`
-- `payment_plan`
-- `earliest_date_for_full_payment`
-- `spending_changes_needed`
+- `amount_safe_to_pay`, `affordability_status`, `recommended_payment_method`, `payment_plan`, `earliest_date_for_full_payment`, `spending_changes_needed`
 
-Results: `code/temp_data/regression_report.json` (`passed`, `failed`, `pass_rate`, per-request `mismatches`).
+Report: `code/temp_data/regression_report.json` (`passed`, `failed`, `pass_rate`, per-request `mismatches`).
 
-### Recommended regression workflow
-
-**Fast loop (sample only, after changing Stage 2/3 logic):**
+**Fast loop after changing Stage 2/3 logic:**
 
 ```bash
 python code/main.py --stage1-only --mode sample
@@ -78,10 +155,7 @@ python code/main.py --stage2-only --mode sample
 python code/main.py --stage3-only --mode sample
 ```
 
-- Writes **`output.csv` with 25 rows** (sample requests only).
-- Prints e.g. `Sample regression: X/25 passed -> code/temp_data/regression_report.json`.
-
-**Full-context decisions, sample regression only:**
+**Full 275-user context, still score 25 samples:**
 
 ```bash
 python code/main.py --stage1-only --mode all
@@ -89,66 +163,7 @@ python code/main.py --stage2-only --mode all
 python code/main.py --stage3-only --mode all
 ```
 
-- Processes **275** users in Stages 1–2.
-- Stage 3 still runs regression on the **25** sample predictions embedded in the full run.
-- Writes **`output.csv` with 250 rows** (eval / submission set).
-
-**Regression without rewriting submission output shape (sample output file):**
-
-Use `--mode sample` for all three stages when you only want a 25-row `output.csv` and the report.
-
-**Skip regression (faster, no report file):**
-
-```bash
-python code/main.py --stage3-only --mode sample --no-regression
-```
-
-**Inspect failures:** open `code/temp_data/regression_report.json` and fix Stage 2 forecast rules or Stage 3 planner; re-run Stage 2–3 (or Stage 3 only if ledgers still match `--mode`).
-
----
-
-## Eval output (250 requests — submission)
-
-Official eval requests are in `dataset/requests.csv` (`request_26` …, 250 rows). They are **not** in `sample_requests.csv`.
-
-### Produce submission `output.csv` (250 rows)
-
-**One-shot full pipeline (recommended before submit):**
-
-```bash
-python code/main.py
-```
-
-Equivalent to:
-
-```bash
-python code/main.py --mode all
-```
-
-This runs Stages 1–3 with `mode=all`, writes **`output.csv`** at the repo root with **250** rows (eval `request_id` order from `dataset/requests.csv`), and runs sample regression if sample users were included in the run.
-
-**Eval-only scope (250 users in intermediate files):**
-
-```bash
-python code/main.py --stage1-only --mode eval
-python code/main.py --stage2-only --mode eval
-python code/main.py --stage3-only --mode eval
-```
-
-Requires `user_context.csv` to contain eval users (run Stage 1 with `--mode all` or `--mode eval` after a full consolidation). Stage 3 with `--mode eval` writes **250** rows to `output.csv`.
-
-**Stage 3 only (ledgers rebuilt if needed):**
-
-```bash
-python code/main.py --stage3-only --mode all
-```
-
-Uses existing `user_context.csv` (must cover all **250** eval users). Rebuilds `resolved_ledgers.json` if its stored `mode`/`user_count` ≠ `all`/275.
-
-### What `output.csv` is *not*
-
-- `--mode sample` → **25** rows (for calibration, not HackerRank eval upload).
-- Regression report does not replace `output.csv`; it only scores sample rows when sample users are processed in Stage 3.
+Stage 3 with `--mode all` still writes **250** eval rows to `output.csv` while regression uses the 25 sample predictions from the same run.
 
 ---
 
@@ -166,11 +181,11 @@ Uses existing `user_context.csv` (must cover all **250** eval users). Rebuilds `
 
 1. **Stage 1** — Join `dataset/*` → `code/temp_data/user_context.csv`
 2. **Stage 2** — Ledger, `images.json` amounts, FX, 90-day baseline forecast → `resolved_ledgers.json`
-3. **Stage 3** — Deterministic affordability + stub explanation → `output.csv` + optional `regression_report.json`
+3. **Stage 3** — Deterministic affordability + explanation (DeepSeek or stubs) → `output.csv` + optional `regression_report.json`
 
-Exchange rates: always read from `dataset/exchange_rates.csv` (not copied into `user_context.csv`).
+Exchange rates are always read from `dataset/exchange_rates.csv` (not copied into `user_context.csv`).
 
-Message and vision LLM hooks are stubbed; the pipeline runs without API keys.
+Deeper control-flow notes: `docs/stage1.md`, `docs/stage2.md`, `docs/stage3.md` at repo root.
 
 ---
 
@@ -179,5 +194,5 @@ Message and vision LLM hooks are stubbed; the pipeline runs without API keys.
 - [ ] `python code/main.py` completed without errors
 - [ ] `output.csv` has **250** data rows + header
 - [ ] Column names and order match the challenge spec
-- [ ] `code/temp_data/regression_report.json` reviewed (sample pass rate acceptable for your iteration)
-- [ ] `decision_explanation` still stubbed unless LLM step was added
+- [ ] `code/temp_data/regression_report.json` reviewed if you rely on sample pass rate
+- [ ] Explanation mode documented (`--stub-explanations` vs live DeepSeek) for your submission package
