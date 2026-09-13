@@ -1,0 +1,33 @@
+﻿=== request_03
+gold: {'amount_safe_to_pay': '873000', 'affordability_status': 'affordable_later', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': '2019-11-15'}
+{"message_id": "message_02", "user_id": "user_03", "request_id": "request_03", "related_event_id": "", "sent_at": "2019-08-31T09:30:00Z", "source_type": "employer", "message_text": "Tim payroll BrightPath Media telah mengirim pembaruan. Gaji rutin untuk penggajian berikutnya sudah dikonfirmasi. Slip
+
+=== request_04
+gold: {'amount_safe_to_pay': '8401800', 'affordability_status': 'affordable_later', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': '2024-06-15'}
+{"message_id": "message_03", "user_id": "user_04", "request_id": "request_04", "related_event_id": "", "sent_at": "2024-06-01T09:30:00Z", "source_type": "employer", "message_text": "Rincian penggajian Anda di Greenfield Foods telah berubah. Bonus kuartalan Anda masih menunggu hasil akhir penilaian k
+
+=== request_05
+gold: {'amount_safe_to_pay': '737', 'affordability_status': 'not_affordable', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': ''}
+
+=== request_06
+gold: {'amount_safe_to_pay': '603.3', 'affordability_status': 'affordable_with_plan', 'spending_changes_needed': 'stop:event_476', 'earliest_date_for_full_payment': '2026-01-15'}
+{"message_id": "message_04", "user_id": "user_06", "request_id": "request_06", "related_event_id": "", "sent_at": "2025-12-28T09:30:00Z", "source_type": "employer", "message_text": "HereÆs the latest payroll information from Northstar Labs. Your temporary monthly pay is EUR 1037.52. The reduced amou
+
+=== request_10
+gold: {'amount_safe_to_pay': '12700', 'affordability_status': 'not_affordable', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': ''}
+{"message_id": "message_07", "user_id": "user_10", "request_id": "request_10", "related_event_id": "", "sent_at": "2024-11-25T09:30:00Z", "source_type": "service_provider", "message_text": "HereÆs the latest service update from QuickCrew. The next QuickCrew payout is still pending. The weekly earnin
+
+=== request_11
+gold: {'amount_safe_to_pay': '12510645', 'affordability_status': 'affordable_with_plan', 'spending_changes_needed': 'reduce_to:event_989:665950', 'earliest_date_for_full_payment': '2025-07-15'}
+{"message_id": "message_08", "user_id": "user_11", "request_id": "request_11", "related_event_id": "", "sent_at": "2025-04-22T09:30:00Z", "source_type": "employer", "message_text": "Berikut informasi penggajian terbaru dari Greenfield Foods. Gaji pokok yang dikonfirmasi adalah IDR 38760000. Komisi d
+
+=== request_21
+gold: {'amount_safe_to_pay': '1543.35', 'affordability_status': 'affordable_with_plan', 'spending_changes_needed': 'stop:event_1815|reduce_to:event_1816:23.50', 'earliest_date_for_full_payment': '2026-04-15'}
+
+=== request_02
+gold: {'amount_safe_to_pay': '17229139.2', 'affordability_status': 'affordable_with_plan', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': '2025-09-15'}
+{"message_id": "message_01", "user_id": "user_02", "request_id": "", "related_event_id": "", "sent_at": "2025-07-29T09:30:00Z", "source_type": "employer", "message_text": "Rincian penggajian Anda di Cobalt Systems telah berubah. Gaji bulanan Anda naik menjadi IDR 42750000. Perubahan ini berlaku mula
+
+=== request_19
+gold: {'amount_safe_to_pay': '28820', 'affordability_status': 'affordable_with_plan', 'spending_changes_needed': 'none', 'earliest_date_for_full_payment': '2024-09-15'}
+

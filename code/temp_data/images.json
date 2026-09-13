@@ -1,0 +1,649 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Hand-extracted values from dataset/media/images/*.png for hackathon use. Stage 2 should read resolved_amount (and currency) onto the linked financial event instead of calling a vision LLM.",
+  "source": "dataset/images.csv + dataset/financial_events.csv + visual inspection of PNGs",
+  "images": [
+    {
+      "image_id": "image_01",
+      "user_id": "user_03",
+      "request_id": "request_03",
+      "related_event_id": "event_253",
+      "image_path": "dataset/media/images/image_01.png",
+      "document_type": "payslip",
+      "summary": "Indonesian pay slip Aug-2019 for M NURHUDA SY (Relationship Manager).",
+      "event_context": {
+        "event_type": "income",
+        "description": "August 2019 net salary",
+        "category": "salary",
+        "direction": "credit",
+        "currency": "IDR",
+        "event_date": "2019-08-31",
+        "settlement_date": "2019-08-31",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "pay_period": "Aug-2019",
+        "employee_name": "M NURHUDA SY",
+        "employee_no": "19050378",
+        "position": "Relationship Manager",
+        "salary_base": 4500000,
+        "total_earnings": 4780800,
+        "total_deductions": 415800,
+        "net_pay": 4365000,
+        "net_pay_words": "Four Million Three Hundred Sixty Five Thousand Rupiahs",
+        "bank_transfer": "Bank Central Asia - 258237290"
+      },
+      "resolved_amount": "4365000",
+      "resolved_amount_rationale": "Use Net Pay (IDR 4,365,000) for August 2019 net salary credit; matches bank transfer line."
+    },
+    {
+      "image_id": "image_02",
+      "user_id": "user_16",
+      "request_id": "request_16",
+      "related_event_id": "event_1442",
+      "image_path": "dataset/media/images/image_02.png",
+      "document_type": "rent_receipt",
+      "summary": "Rent receipt from owner Vimlesh to tenant Yashwant, Bengaluru property.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Outstanding rent balance",
+        "category": "rent",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2023-08-11",
+        "settlement_date": "2023-08-16",
+        "status": "scheduled"
+      },
+      "extracted_fields": {
+        "receipt_no": "9453",
+        "date": "11/08/23",
+        "owner": "Vimlesh",
+        "tenant": "Yashwant",
+        "rent_period": "April 2022 to September 2022",
+        "rent_and_maintenance": 180000,
+        "water_charges": 5000,
+        "rental_tax": 5000,
+        "electrical_charges": 10000,
+        "total_amount_due": 200000,
+        "amount_received": 100000,
+        "balance_due": 100000,
+        "received_by": "Sanjay"
+      },
+      "resolved_amount": "100000",
+      "resolved_amount_rationale": "Event is 'Outstanding rent balance'; receipt shows Balance Due INR 1,00,000 (half of INR 2,00,000 total still owed).",
+      "alternate_amounts": {
+        "total_rent_obligation": "200000"
+      }
+    },
+    {
+      "image_id": "image_03",
+      "user_id": "user_17",
+      "request_id": "request_17",
+      "related_event_id": "event_1545",
+      "image_path": "dataset/media/images/image_03.png",
+      "document_type": "retail_bill_of_supply",
+      "summary": "RIDDHI SIDDHI (NUTS AND SPICES) grocery bill, Koramangala Bangalore.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Bulk groceries and pantry purchase",
+        "category": "groceries",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-02-27",
+        "settlement_date": "2026-02-27",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "shop_gstin": "29ALCPJ4001H1ZI",
+        "bill_no": "11250000158",
+        "date": "27/02/2026",
+        "time": "16:10",
+        "line_item_count": 11,
+        "quantity_total": 76,
+        "net_amount": 41272.0,
+        "cash_paid": 41272.0
+      },
+      "resolved_amount": "41272",
+      "resolved_amount_rationale": "Net Amount / Cash Paid on bill of supply."
+    },
+    {
+      "image_id": "image_04",
+      "user_id": "user_19",
+      "request_id": "request_19",
+      "related_event_id": "event_1700",
+      "image_path": "dataset/media/images/image_04.png",
+      "document_type": "delivery_order_summary",
+      "summary": "Delivered grocery order item list (13 items) to Jeevan Bhima Nagar.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Delivered grocery order",
+        "category": "groceries",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2024-09-03",
+        "settlement_date": "2024-09-03",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "delivery_status": "Delivered",
+        "item_count": 13,
+        "location": "Jeevan Bhima Nagar",
+        "item_bill_total": 2854.0,
+        "notable_line_items": [
+          "Nissin Cup Noodles combos",
+          "The Whole Truth protein bars",
+          "O'cean fruit water/juice"
+        ]
+      },
+      "resolved_amount": "2854",
+      "resolved_amount_rationale": "Item Bill total shown in order summary (INR 2854.00)."
+    },
+    {
+      "image_id": "image_05",
+      "user_id": "user_20",
+      "request_id": "request_20",
+      "related_event_id": "event_1786",
+      "image_path": "dataset/media/images/image_05.png",
+      "document_type": "telecom_bill_summary",
+      "summary": "Airtel Thanks for Business account summary / monthly charges.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Outstanding telecom bill",
+        "category": "utilities",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-02-06",
+        "settlement_date": "2026-02-09",
+        "status": "pending"
+      },
+      "extracted_fields": {
+        "previous_balance": 3543.54,
+        "payments": -3543.54,
+        "this_month_charges": 704.05,
+        "amount_due_till": "06-Feb-2026",
+        "amount_due_till_value": 704.05,
+        "amount_due_after": "06-Feb-2026",
+        "amount_due_after_value": 822.05,
+        "rentals": 580.65,
+        "usage_charges": 16.0,
+        "taxes": 107.4
+      },
+      "resolved_amount": "704.05",
+      "resolved_amount_rationale": "Outstanding telecom bill; use Amount due till 06-Feb-2026 (= This month's charges Total INR 704.05).",
+      "alternate_amounts": {
+        "amount_due_after_due_date": "822.05"
+      }
+    },
+    {
+      "image_id": "image_06",
+      "user_id": "user_33",
+      "request_id": "request_33",
+      "related_event_id": "event_3051",
+      "image_path": "dataset/media/images/image_06.png",
+      "document_type": "gst_tax_invoice",
+      "summary": "Blink Commerce / Grofers GST invoice for chocolate bars (Amazon).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Grocery tax invoice",
+        "category": "groceries",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-01-06",
+        "settlement_date": "2026-01-06",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "seller": "Blink Commerce Private Limited",
+        "seller_gstin": "29AAFCG9846E1Z7",
+        "product_line": "The Whole Truth dark chocolate bars (multiple SKUs)",
+        "quantity_total": 7,
+        "amount_in_words": "One Thousand And Nine Hundred And Ninety-Five Rupees And Zero Paisa Only",
+        "grand_total": 1995.0
+      },
+      "resolved_amount": "1995",
+      "resolved_amount_rationale": "Grand Total (INR) on tax invoice."
+    },
+    {
+      "image_id": "image_07",
+      "user_id": "user_35",
+      "request_id": "request_35",
+      "related_event_id": "event_3231",
+      "image_path": "dataset/media/images/image_07.png",
+      "document_type": "restaurant_tax_invoice",
+      "summary": "NAGARJUNA 1984 KMR restaurant tax invoice (Koramangala).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Restaurant tax invoice",
+        "category": "dining",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2025-10-29",
+        "settlement_date": "2025-10-29",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "bill_no": "10",
+        "date_time": "29-10-2025 12:12 PM",
+        "subtotal": 8122.0,
+        "sgst_2_5_percent": 203.05,
+        "cgst_2_5_percent": 203.05,
+        "total_with_tax": 8528.1,
+        "grand_total_rounded_rs": 8528,
+        "status_stamp": "PAID"
+      },
+      "resolved_amount": "8528.1",
+      "resolved_amount_rationale": "Total / Grand Total with GST (8528.10); receipt also prints rounded 8528 RS.",
+      "alternate_amounts": {
+        "grand_total_rounded": "8528"
+      }
+    },
+    {
+      "image_id": "image_08",
+      "user_id": "user_48",
+      "request_id": "request_48",
+      "related_event_id": "event_4535",
+      "image_path": "dataset/media/images/image_08.png",
+      "document_type": "maintenance_payment_receipt",
+      "summary": "Online maintenance bill payment receipt (Paytm), invoice 6455.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Property maintenance invoice",
+        "category": "housing",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-07-24",
+        "settlement_date": "2026-07-24",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "invoice_no": "6455",
+        "charge_date": "24-07-2026",
+        "due_date": "30-08-2026",
+        "maintenance_apr_jun_2026": 13880.0,
+        "club_house_charges": 1050.0,
+        "infrastructure_expenses": 409.0,
+        "total_amount_received": 15339.0,
+        "payment_gateway": "paytm",
+        "account": "ICICI Bank"
+      },
+      "resolved_amount": "15339",
+      "resolved_amount_rationale": "Total Amount Received on maintenance receipt."
+    },
+    {
+      "image_id": "image_09",
+      "user_id": "user_55",
+      "request_id": "request_55",
+      "related_event_id": "event_5170",
+      "image_path": "dataset/media/images/image_09.png",
+      "document_type": "utility_payment_receipt",
+      "summary": "Water bill online payment receipt (Paytm), invoice 6320.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Water bill due",
+        "category": "utilities",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-06-07",
+        "settlement_date": "2026-06-07",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "description": "Water Bill - Jan to March 2026",
+        "invoice_no": "6320",
+        "charge_date": "07-06-2026",
+        "due_date": "02-07-2026",
+        "charged_amount": 723.0,
+        "total_amount_received": 723.0,
+        "payment_gateway": "paytm",
+        "account": "Indian Bank"
+      },
+      "resolved_amount": "723",
+      "resolved_amount_rationale": "Total Amount Received / charged amount on water bill receipt."
+    },
+    {
+      "image_id": "image_10",
+      "user_id": "user_64",
+      "request_id": "request_64",
+      "related_event_id": "event_6033",
+      "image_path": "dataset/media/images/image_10.png",
+      "document_type": "gst_retail_invoice",
+      "summary": "Large multi-page grocery/retail tax invoice (22 line items).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Large grocery tax invoice",
+        "category": "groceries",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2024-06-03",
+        "settlement_date": "2024-06-10",
+        "status": "pending"
+      },
+      "extracted_fields": {
+        "line_item_count": 22,
+        "sub_total": 72045.0,
+        "cgst_components": 1513.13,
+        "sgst_components": 1513.13,
+        "cgst_20_percent_component": 2304.0,
+        "sgst_20_percent_component": 2304.0,
+        "total_in_words": "Indian Rupee Seventy-Nine Thousand Six Hundred Seventy-Nine and Twenty-Six Paise Only",
+        "invoice_total": 79679.26,
+        "balance_due": 79679.26
+      },
+      "resolved_amount": "79679.26",
+      "resolved_amount_rationale": "Invoice Total / Balance Due on GST invoice footer."
+    },
+    {
+      "image_id": "image_11",
+      "user_id": "user_73",
+      "request_id": "request_73",
+      "related_event_id": "event_6859",
+      "image_path": "dataset/media/images/image_11.png",
+      "document_type": "hospital_provisional_bill",
+      "summary": "Jeevan Hospital provisional bill for dummy patient admission Jan 2023.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Hospital bill payable",
+        "category": "healthcare",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2023-01-19",
+        "settlement_date": "2023-01-23",
+        "status": "scheduled"
+      },
+      "extracted_fields": {
+        "hospital": "Jeevan Hospital, Pune",
+        "admission_no": "00001",
+        "admission_date": "18-Jan-2023",
+        "bill_date": "19-Jan-2023",
+        "room_and_nursing_charges": 1650.0,
+        "ot_charges": 1000.0,
+        "professional_fees": 1000.0,
+        "total_bill_amount": 3650.0,
+        "amount_payable": 3650.0,
+        "amount_paid": 0.0,
+        "balance": 3650.0
+      },
+      "resolved_amount": "3650",
+      "resolved_amount_rationale": "Amount Payable / Balance on provisional hospital bill."
+    },
+    {
+      "image_id": "image_12",
+      "user_id": "user_78",
+      "request_id": "request_78",
+      "related_event_id": "event_7307",
+      "image_path": "dataset/media/images/image_12.png",
+      "document_type": "taxi_receipt",
+      "summary": "CityCab Service taxi receipt (USD), trip CC-8923.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Taxi fare",
+        "category": "transport",
+        "direction": "debit",
+        "currency": "USD",
+        "event_date": "2025-10-01",
+        "settlement_date": "2025-10-01",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "datetime": "01/10/2025 21:45",
+        "trip_id": "CC-8923",
+        "distance_miles": 12.3,
+        "ride_distance_charge": 28.5,
+        "airport_surcharge": 5.0,
+        "subtotal": 33.5,
+        "tax": 0.0,
+        "total": 33.5,
+        "cash_paid": 40.0,
+        "change": 6.5,
+        "note": "Receipt uses comma as decimal separator (e.g. 33,50 = 33.50 USD)."
+      },
+      "resolved_amount": "33.5",
+      "resolved_amount_rationale": "Total fare on receipt; event currency is USD."
+    },
+    {
+      "image_id": "image_13",
+      "user_id": "user_84",
+      "request_id": "request_84",
+      "related_event_id": "event_7941",
+      "image_path": "dataset/media/images/image_13.png",
+      "document_type": "ecommerce_order_confirmation",
+      "summary": "Order details for two tote bags (DailyObjects).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Tote bag order",
+        "category": "shopping",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-04-03",
+        "settlement_date": "2026-04-03",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "items": [
+          {
+            "name": "DailyObjects Mumbai City Tote Bag",
+            "qty": 1,
+            "price": 699
+          },
+          {
+            "name": "Ivory - Navy All Time Tote Bag",
+            "qty": 1,
+            "price": 1599
+          }
+        ],
+        "item_total": 2298,
+        "delivery": "Free",
+        "total_paid": 2298
+      },
+      "resolved_amount": "2298",
+      "resolved_amount_rationale": "Total paid on order summary (incl. taxes and delivery)."
+    },
+    {
+      "image_id": "image_14",
+      "user_id": "user_101",
+      "request_id": "request_101",
+      "related_event_id": "event_9421",
+      "image_path": "dataset/media/images/image_14.png",
+      "document_type": "handwritten_pharmacy_bill",
+      "summary": "Handwritten medical store bill (Samban, Moov, Axe oil, Stayfree, Bandage).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Pharmacy purchase",
+        "category": "healthcare",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2025-11-02",
+        "settlement_date": "2025-11-02",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "line_items": [
+          {
+            "qty": 2,
+            "particulars": "Samban",
+            "amount": 1500.0
+          },
+          {
+            "qty": 2,
+            "particulars": "moov spray",
+            "amount": 704.0
+          },
+          {
+            "qty": 1,
+            "particulars": "Axe oil",
+            "amount": 796.0
+          },
+          {
+            "qty": 1,
+            "particulars": "Stayfree",
+            "amount": 850.0
+          },
+          {
+            "qty": 2,
+            "particulars": "Stayfree",
+            "amount": 303.0
+          },
+          {
+            "qty": 2,
+            "particulars": "Bandage",
+            "amount": 670.0
+          }
+        ],
+        "total": 4543.0
+      },
+      "resolved_amount": "4543",
+      "resolved_amount_rationale": "Handwritten TOTAL at bottom of pharmacy bill."
+    },
+    {
+      "image_id": "image_15",
+      "user_id": "user_105",
+      "request_id": "request_105",
+      "related_event_id": "event_9806",
+      "image_path": "dataset/media/images/image_15.png",
+      "document_type": "airline_tax_invoice",
+      "summary": "IndiGo tax invoice DEL-BLR, PNR UC83TT, passenger Akarsh Jain.",
+      "event_context": {
+        "event_type": "expense",
+        "description": "Airline ticket purchase",
+        "category": "transport",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-06-07",
+        "settlement_date": "2026-06-07",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "date": "07-Jun-2026",
+        "passenger": "Akarsh Jain",
+        "pnr": "UC83TT",
+        "flight": "6E-861",
+        "route": "DEL to BLR",
+        "air_travel_taxable": 9124.0,
+        "airport_charges_nontaxable": 388.0,
+        "cgst": 228.0,
+        "sgst": 228.0,
+        "grand_total_incl_taxes": 9968.0
+      },
+      "resolved_amount": "9968",
+      "resolved_amount_rationale": "Grand Total (Incl Taxes) on IndiGo invoice."
+    },
+    {
+      "image_id": "image_16",
+      "user_id": "user_113",
+      "request_id": "request_113",
+      "related_event_id": "event_10521",
+      "image_path": "dataset/media/images/image_16.png",
+      "document_type": "ev_charging_invoice",
+      "summary": "EV charging session invoice at Krishnagiri station (CCS2).",
+      "event_context": {
+        "event_type": "expense",
+        "description": "EV charging wallet payment",
+        "category": "transport",
+        "direction": "debit",
+        "currency": "INR",
+        "event_date": "2026-09-03",
+        "settlement_date": "2026-09-03",
+        "status": "settled"
+      },
+      "extracted_fields": {
+        "station": "Krishnagiri (KFC / food court area), Tamil Nadu",
+        "charge_point_id": "1110",
+        "connector": "CCS2",
+        "energy_kwh": 12.58,
+        "tariff_per_kwh": 26.49,
+        "charged_on": "03/09/2026 12:35:10 am",
+        "duration": "00:15:26",
+        "base_amount": 333.24,
+        "cgst_9_percent": 29.99,
+        "sgst_9_percent": 29.99,
+        "payment_method": "WALLET",
+        "total_amount": 393.22,
+        "amount_in_words": "Three Hundred and Ninety Three Rupees And Twenty Two Paise Only"
+      },
+      "resolved_amount": "393.22",
+      "resolved_amount_rationale": "Total Amount on EV charging invoice."
+    }
+  ],
+  "quick_lookup": {
+    "event_253": {
+      "image_id": "image_01",
+      "resolved_amount": "4365000",
+      "currency": "IDR"
+    },
+    "event_1442": {
+      "image_id": "image_02",
+      "resolved_amount": "100000",
+      "currency": "INR"
+    },
+    "event_1545": {
+      "image_id": "image_03",
+      "resolved_amount": "41272",
+      "currency": "INR"
+    },
+    "event_1700": {
+      "image_id": "image_04",
+      "resolved_amount": "2854",
+      "currency": "INR"
+    },
+    "event_1786": {
+      "image_id": "image_05",
+      "resolved_amount": "704.05",
+      "currency": "INR"
+    },
+    "event_3051": {
+      "image_id": "image_06",
+      "resolved_amount": "1995",
+      "currency": "INR"
+    },
+    "event_3231": {
+      "image_id": "image_07",
+      "resolved_amount": "8528.1",
+      "currency": "INR"
+    },
+    "event_4535": {
+      "image_id": "image_08",
+      "resolved_amount": "15339",
+      "currency": "INR"
+    },
+    "event_5170": {
+      "image_id": "image_09",
+      "resolved_amount": "723",
+      "currency": "INR"
+    },
+    "event_6033": {
+      "image_id": "image_10",
+      "resolved_amount": "79679.26",
+      "currency": "INR"
+    },
+    "event_6859": {
+      "image_id": "image_11",
+      "resolved_amount": "3650",
+      "currency": "INR"
+    },
+    "event_7307": {
+      "image_id": "image_12",
+      "resolved_amount": "33.5",
+      "currency": "USD"
+    },
+    "event_7941": {
+      "image_id": "image_13",
+      "resolved_amount": "2298",
+      "currency": "INR"
+    },
+    "event_9421": {
+      "image_id": "image_14",
+      "resolved_amount": "4543",
+      "currency": "INR"
+    },
+    "event_9806": {
+      "image_id": "image_15",
+      "resolved_amount": "9968",
+      "currency": "INR"
+    },
+    "event_10521": {
+      "image_id": "image_16",
+      "resolved_amount": "393.22",
+      "currency": "INR"
+    }
+  }
+}
